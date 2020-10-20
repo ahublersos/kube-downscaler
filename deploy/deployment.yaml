@@ -26,6 +26,11 @@ spec:
           - --dry-run
           # run every minute
           - --interval=60
+          - --namespace=mco
+          - --include-resources=deployments,statefulsets
+          - --default-uptime=Mon-Fri 08:00-19:59 US/Eastern
+          - --default-downtime=Sat-Sun 00:00-23:59 US/Eastern,Mon-Fri 20:00-23:59 US/Eastern,Mon-Fri 00:00-07:59 US/Eastern
+          - --downtime-replicas=0
         envFrom:
           - configMapRef:
               name: kube-downscaler

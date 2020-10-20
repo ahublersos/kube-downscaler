@@ -3,5 +3,3 @@ kind: ConfigMap
 metadata:
   name: kube-downscaler
 data:
-  # downscale for non-work hours
-  DEFAULT_UPTIME: "Mon-Fri 07:30-20:30 CET"
