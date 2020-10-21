@@ -174,12 +174,12 @@ def scale_up(
     elif resource.kind == "HorizontalPodAutoscaler":
         resource.obj["spec"]["minReplicas"] = new_replicas
         logger.info(
-            f"Scaling up {resource.kind} {resource.namespace}/{resource.name} from {replicas} to {original_replicas} minReplicas (uptime: {uptime}, downtime: {downtime})"
+            f"Scaling up {resource.kind} {resource.namespace}/{resource.name} from {replicas} to {new_replicas} minReplicas (uptime: {uptime}, downtime: {downtime})"
         )
     else:
         resource.replicas = new_replicas
         logger.info(
-            f"Scaling up {resource.kind} {resource.namespace}/{resource.name} from {replicas} to {original_replicas} replicas (uptime: {uptime}, downtime: {downtime})"
+            f"Scaling up {resource.kind} {resource.namespace}/{resource.name} from {replicas} to {new_replicas} replicas (uptime: {uptime}, downtime: {downtime})"
         )
     if enable_events:
         helper.add_event(
