@@ -42,6 +42,7 @@ def main(args=None):
         args.downtime_replicas,
         args.deployment_time_annotation,
         args.enable_events,
+        args.upscale_step_size,
     )
 
 
@@ -61,6 +62,7 @@ def run_loop(
     downtime_replicas,
     deployment_time_annotation=None,
     enable_events=False,
+    upscale_step_size=0,
 ):
     handler = shutdown.GracefulShutdown()
     while True:
@@ -81,6 +83,7 @@ def run_loop(
                 downtime_replicas=downtime_replicas,
                 deployment_time_annotation=deployment_time_annotation,
                 enable_events=enable_events,
+                upscale_step_size=upscale_step_size,
             )
         except Exception as e:
             logger.exception(f"Failed to autoscale: {e}")

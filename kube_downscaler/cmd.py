@@ -91,4 +91,10 @@ def get_parser():
         help="Emit Kubernetes events for scale up/down",
         action="store_true",
     )
+    parser.add_argument(
+        "--upscale_step_size",
+        type=int,
+        help="Number of pods added at one time when scaling up. (default: 0)",
+        default=int(os.getenv("UPSCALE_STEP_SIZE", 0)),
+    )
     return parser

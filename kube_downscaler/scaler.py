@@ -26,6 +26,7 @@ EXCLUDE_UNTIL_ANNOTATION = "downscaler/exclude-until"
 UPTIME_ANNOTATION = "downscaler/uptime"
 DOWNTIME_ANNOTATION = "downscaler/downtime"
 DOWNTIME_REPLICAS_ANNOTATION = "downscaler/downtime-replicas"
+UPSTCALE_STEP_SIZE_ANNOTATION = "downscaler/upscale-step-size"
 
 RESOURCE_CLASSES = [Deployment, StatefulSet, Stack, CronJob, HorizontalPodAutoscaler]
 
@@ -153,7 +154,16 @@ def scale_up(
     downtime,
     dry_run: bool,
     enable_events: bool,
+    upscale_step_size: int,
 ):
+    # Increase replicas by upscale_step_size, but not greater than original_replicas.
+    if upscale_step_size > 0:
+        new_replicas = replicas + upscale_step_size
+        if new_replicas > original_replicas:
+            new_replicas = original_replicas
+    else:
+        new_replicas = original_replicas
+
     event_message = "Scaling up replicas"
     if resource.kind == "CronJob":
         resource.obj["spec"]["suspend"] = False
@@ -162,12 +172,12 @@ def scale_up(
         )
         event_message = "Unsuspending CronJob"
     elif resource.kind == "HorizontalPodAutoscaler":
-        resource.obj["spec"]["minReplicas"] = original_replicas
+        resource.obj["spec"]["minReplicas"] = new_replicas
         logger.info(
             f"Scaling up {resource.kind} {resource.namespace}/{resource.name} from {replicas} to {original_replicas} minReplicas (uptime: {uptime}, downtime: {downtime})"
         )
     else:
-        resource.replicas = original_replicas
+        resource.replicas = new_replicas
         logger.info(
             f"Scaling up {resource.kind} {resource.namespace}/{resource.name} from {replicas} to {original_replicas} replicas (uptime: {uptime}, downtime: {downtime})"
         )
@@ -175,7 +185,8 @@ def scale_up(
         helper.add_event(
             resource, event_message, "ScaleUp", "Normal", dry_run,
         )
-    resource.annotations[ORIGINAL_REPLICAS_ANNOTATION] = None
+    if new_replicas == original_replicas:  # If scaling up is done.
+        resource.annotations[ORIGINAL_REPLICAS_ANNOTATION] = None
 
 
 def scale_down(
@@ -239,6 +250,7 @@ def autoscale_resource(
     namespace_excluded=False,
     deployment_time_annotation: Optional[str] = None,
     enable_events: bool = False,
+    upscale_step_size: int = 0,
 ):
     try:
         exclude = namespace_excluded or ignore_resource(resource, now)
@@ -312,6 +324,7 @@ def autoscale_resource(
                     downtime,
                     dry_run=dry_run,
                     enable_events=enable_events,
+                    upscale_step_size=upscale_step_size,
                 )
                 update_needed = True
             elif (
@@ -368,6 +381,7 @@ def autoscale_resources(
     downtime_replicas: int,
     deployment_time_annotation: Optional[str] = None,
     enable_events: bool = False,
+    upscale_step_size: int = 0,
 ):
     resources_by_namespace = collections.defaultdict(list)
     for resource in kind.objects(api, namespace=(namespace or pykube.all)):
@@ -429,6 +443,12 @@ def autoscale_resources(
         else:
             forced_uptime_for_namespace = False
 
+        upscale_step_size_for_namespace = get_annotation_value_as_int(
+            namespace_obj, UPSTCALE_STEP_SIZE_ANNOTATION
+        )
+        if upscale_step_size_for_namespace is None:
+            upscale_step_size_for_namespace = upscale_step_size
+
         for resource in resources:
             autoscale_resource(
                 resource,
@@ -444,6 +464,7 @@ def autoscale_resources(
                 namespace_excluded=excluded,
                 deployment_time_annotation=deployment_time_annotation,
                 enable_events=enable_events,
+                upscale_step_size=upscale_step_size_for_namespace,
             )
 
 
@@ -461,6 +482,7 @@ def scale(
     downtime_replicas: int = 0,
     deployment_time_annotation: Optional[str] = None,
     enable_events: bool = False,
+    upscale_step_size: int = 0,
 ):
     api = helper.get_kube_api()
 
@@ -487,4 +509,5 @@ def scale(
                 downtime_replicas,
                 deployment_time_annotation,
                 enable_events,
+                upscale_step_size,
             )
