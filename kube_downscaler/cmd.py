@@ -92,7 +92,7 @@ def get_parser():
         action="store_true",
     )
     parser.add_argument(
-        "--upscale_step_size",
+        "--upscale-step-size",
         type=int,
         help="Number of pods added at one time when scaling up. (default: 0)",
         default=int(os.getenv("UPSCALE_STEP_SIZE", 0)),
