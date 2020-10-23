@@ -1,6 +1,6 @@
 .PHONY: test docker push
 
-IMAGE            ?= ahubler/kube-downscaler
+IMAGE            ?= 467536752717.dkr.ecr.us-east-1.amazonaws.com/kube-downscaler
 VERSION          ?= $(shell git describe --tags --always --dirty)
 TAG              ?= $(VERSION)
 
