@@ -311,7 +311,7 @@ def autoscale_resource(
             if (
                 not ignore
                 and is_uptime
-                # and replicas == downtime_replicas
+                and (replicas == downtime_replicas or upscale_step_size > 0)
                 and original_replicas
                 and original_replicas > 0
             ):
